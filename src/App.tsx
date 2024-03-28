@@ -11,7 +11,6 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -22,7 +21,7 @@ import { Input } from './components/ui/input'
 
 import { initializeApp } from 'firebase/app'
 import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
-import { collection, addDoc, getFirestore, getDocs, deleteDoc, doc } from 'firebase/firestore'
+import { collection, addDoc, getFirestore, getDocs, deleteDoc, doc, query, where } from 'firebase/firestore'
 import { DialogClose } from '@radix-ui/react-dialog'
 
 
@@ -54,7 +53,7 @@ function App() {
   const [cards, setCards] = useState<Card[] | []>([])
 
   const getCards = async () => {
-    const results = await getDocs(collection(db_firestore, "cards"))
+    const results = await getDocs(query(collection(db_firestore, "cards"), where("uid", "==", user?.uid)))
     const cards_arr: Card[] = []
 
     results.forEach((result) => {
