@@ -51,6 +51,7 @@ function App() {
   const [content, setContent] = useState("")
   const [user, setUser] = useState(auth.currentUser)
   const [cards, setCards] = useState<Card[] | []>([])
+  const [searchTerm, setSearchTerm] = useState("")
 
   const getCards = async () => {
     const results = await getDocs(query(collection(db_firestore, "cards"), where("uid", "==", user?.uid)))
@@ -79,14 +80,20 @@ function App() {
   }
 
   useEffect(() => {
-    const main = async () => {
-      auth.onAuthStateChanged(userProp => {
-        setUser(userProp)
-      })
-      await getCards()    
+    if(!user) { 
+      (async () => {
+        auth.onAuthStateChanged(userProp => {
+          setUser(userProp)
+        })
+      })() 
+    } else {
+       (async () => {
+          await getCards()    
+        })()
     }
-    main()
-  }, [])
+
+
+  }, [user])
 
   const createDoc = async () => {
     await addDoc(collection(db_firestore, "cards"), {
@@ -102,12 +109,16 @@ function App() {
     await signInWithPopup(auth, provider)
   }
 
+  const onSearch = (searchTerm: string) => {
+    setSearchTerm(searchTerm)
+  }
+
   return (
     <div className=' w-screen bg-black max-h-screen overflow-x-hidden'>
-        {/* <div> */}
           { user ?
           (
           <div className='w-screen flex flex-col items-center h-screen space-y-4'>
+            <Input onChange={(e) => { onSearch(e.target.value) }} placeholder='Search' className='w-[75vw] bg-transparent rounded text-white'></Input>
             <Dialog>
               <DialogTrigger className='text-white'>
                 <Button className='w-[65vw] bg-white text-black '>Create Card</Button>
@@ -128,14 +139,16 @@ function App() {
                       <DialogClose>
                         <Button onClick={async () => {
                             await createDoc()
-                        }}>Create</Button>
+                        }}>Create</Button>  
                       </DialogClose>
                   </DialogDescription>
                 </DialogHeader>
               </DialogContent>
             </Dialog>
             {
-              cards.map(card => (
+              cards.filter(c => {
+                return c.content.includes(searchTerm) || c.title.includes(searchTerm)
+              }).map(card => (
                 <Card className='w-[75vw] min-w-[75vw] max-w-[75vw]'>
                   <CardHeader>
                     <CardTitle>{ card.title }</CardTitle>
